@@ -1,0 +1,76 @@
+name: Build NetMirror Music APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.xml'
+      - '**/*.gradle'
+      - '**/*.gradle.kts'
+      - '**/*.toml'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradle/wrapper/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netmirror-apk-build
+  cancel-in-progress: false
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK and NDK packages
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;37.0.0" "ndk;28.2.13676358"
+          yes | sdkmanager --licenses >/dev/null
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build universal FOSS debug APK
+        run: ./gradlew --no-daemon --stacktrace :app:assembleUniversalFossDebug
+
+      - name: Find generated APKs
+        id: apk
+        shell: bash
+        run: |
+          mkdir -p build-apks
+          find app/build/outputs/apk -type f -name '*.apk' -print
+          find app/build/outputs/apk -type f -name '*.apk' -exec cp {} build-apks/ \;
+          if [ -z "$(find build-apks -maxdepth 1 -type f -name '*.apk' -print -quit)" ]; then
+            echo "No APK was generated."
+            exit 1
+          fi
+          ls -lh build-apks
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetMirror-Music-APK
+          path: build-apks/*.apk
+          if-no-files-found: error
+          retention-days: 14
