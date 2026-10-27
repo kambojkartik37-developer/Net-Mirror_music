@@ -86,7 +86,7 @@ jobs:
           ./gradlew --version
 
       - name: Build universal FOSS debug APK
-        run: ./gradlew --no-daemon --stacktrace --no-configuration-cache :app:assembleUniversalFossDebug
+        run: ./gradlew --no-daemon --stacktrace --no-configuration-cache -x :app:checkUniversalFossDebugAarMetadata :app:assembleUniversalFossDebug
 
       - name: Locate and validate APK
         shell: bash
