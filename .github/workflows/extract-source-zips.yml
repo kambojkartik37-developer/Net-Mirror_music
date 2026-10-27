@@ -1,0 +1,124 @@
+name: Extract NetMirror source ZIPs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: extract-netmirror-source
+  cancel-in-progress: false
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract both source ZIPs into repository
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, zipfile, pathlib, shutil, sys
+
+          root = pathlib.Path.cwd()
+          archives = sorted(
+              p for p in root.glob("*.zip")
+              if p.is_file()
+          )
+          if len(archives) < 2:
+              print("ERROR: Expected both source ZIP files in the repository root; found:", [p.name for p in archives])
+              sys.exit(1)
+
+          staging = root / ".source-extract-staging"
+          if staging.exists():
+              shutil.rmtree(staging)
+          staging.mkdir()
+
+          def safe_target(base, name):
+              # Prevent ZIP path traversal (Zip Slip).
+              target = (base / name).resolve()
+              if target != base.resolve() and base.resolve() not in target.parents:
+                  raise ValueError(f"Unsafe ZIP path: {name}")
+              return target
+
+          extracted_count = 0
+          for archive in archives:
+              print(f"Extracting {archive.name}")
+              with zipfile.ZipFile(archive) as zf:
+                  entries = [
+                      i for i in zf.infolist()
+                      if i.filename and not i.filename.startswith("__MACOSX/")
+                      and not i.filename.endswith("/.DS_Store")
+                      and pathlib.PurePosixPath(i.filename).name != ".DS_Store"
+                  ]
+                  if not entries:
+                      raise RuntimeError(f"{archive.name} is empty")
+
+                  # If the ZIP wraps all files in one top-level folder, remove that wrapper.
+                  names = [i.filename.rstrip("/") for i in entries if i.filename.rstrip("/")]
+                  top = {n.split("/", 1)[0] for n in names}
+                  strip_prefix = ""
+                  if len(top) == 1 and all("/" in n or n in top for n in names):
+                      candidate = next(iter(top))
+                      if all(n == candidate or n.startswith(candidate + "/") for n in names):
+                          if any(n.startswith(candidate + "/") for n in names):
+                              strip_prefix = candidate + "/"
+
+                  for info in entries:
+                      name = info.filename
+                      if strip_prefix:
+                          if not name.startswith(strip_prefix):
+                              continue
+                          name = name[len(strip_prefix):]
+                      if not name or name.endswith("/"):
+                          continue
+                      rel = pathlib.PurePosixPath(name)
+                      if rel.is_absolute() or ".." in rel.parts:
+                          raise ValueError(f"Unsafe ZIP path: {info.filename}")
+                      target = safe_target(staging, str(rel))
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with zf.open(info) as src, open(target, "wb") as dst:
+                          shutil.copyfileobj(src, dst)
+                      extracted_count += 1
+
+          if extracted_count == 0:
+              raise RuntimeError("No files were extracted from the ZIP archives")
+
+          # Copy extracted files into the repository, preserving their folder structure.
+          for src in staging.rglob("*"):
+              if src.is_file():
+                  rel = src.relative_to(staging)
+                  dst = root / rel
+                  if dst.exists() and dst.is_dir():
+                      raise RuntimeError(f"File/directory conflict at {rel}")
+                  dst.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(src, dst)
+
+          shutil.rmtree(staging)
+
+          # Remove uploaded ZIPs only after extraction completed successfully.
+          for archive in archives:
+              archive.unlink()
+
+          print(f"Extracted {extracted_count} files. Source ZIPs removed.")
+          PY
+
+      - name: Commit extracted source files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No extracted file changes to commit."
+          else
+            git commit -m "Extract NetMirror Music source ZIPs"
+            git push
+          fi
