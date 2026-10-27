@@ -3,6 +3,8 @@ name: Extract NetMirror source ZIPs
 on:
   push:
     branches: [main]
+    paths:
+      - '*.zip'
   workflow_dispatch:
 
 permissions:
