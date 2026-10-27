@@ -2,6 +2,20 @@ name: NetMirror Music APK - Manual Reliable Build
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-apk-manual.yml'
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.xml'
+      - '**/*.gradle'
+      - '**/*.gradle.kts'
+      - '**/*.toml'
+      - '**/*.proto'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradle/wrapper/**'
 
 permissions:
   contents: read
@@ -34,12 +48,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager 2>/dev/null | head -n 1)"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager 2>/dev/null | head -n 1)"
+          fi
           test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
           echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
           "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "ndk;28.2.13676358"
+
+      - name: Create CI debug signing keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          test -s "$HOME/.android/debug.keystore"
 
       - name: Validate project files
         shell: bash
