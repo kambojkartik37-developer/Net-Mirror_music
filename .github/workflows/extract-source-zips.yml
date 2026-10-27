@@ -23,99 +23,69 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract both source ZIPs into repository
+      - name: Extract source archives if present
         shell: bash
         run: |
           python3 - <<'PY'
-          import os, zipfile, pathlib, shutil, sys
+          import pathlib, zipfile, shutil
 
           root = pathlib.Path.cwd()
-          archives = sorted(
-              p for p in root.glob("*.zip")
-              if p.is_file()
-          )
+          archives = sorted(p for p in root.glob("*.zip") if p.is_file())
+          if not archives:
+              required = ["settings.gradle.kts", "gradlew", "app/build.gradle.kts"]
+              missing = [p for p in required if not (root / p).is_file()]
+              if missing:
+                  raise SystemExit("No source ZIPs found and source project is incomplete: " + ", ".join(missing))
+              print("Source ZIPs have already been extracted. Nothing to do; verification passed.")
+              raise SystemExit(0)
+
           if len(archives) < 2:
-              print("ERROR: Expected both source ZIP files in the repository root; found:", [p.name for p in archives])
-              sys.exit(1)
+              raise SystemExit("Please upload both source ZIP files to the repository root before running extraction.")
 
           staging = root / ".source-extract-staging"
           if staging.exists():
               shutil.rmtree(staging)
           staging.mkdir()
 
-          def safe_target(base, name):
-              # Prevent ZIP path traversal (Zip Slip).
-              target = (base / name).resolve()
-              if target != base.resolve() and base.resolve() not in target.parents:
-                  raise ValueError(f"Unsafe ZIP path: {name}")
-              return target
-
-          extracted_count = 0
-          for archive in archives:
-              print(f"Extracting {archive.name}")
-              with zipfile.ZipFile(archive) as zf:
-                  entries = [
-                      i for i in zf.infolist()
-                      if i.filename and not i.filename.startswith("__MACOSX/")
-                      and not i.filename.endswith("/.DS_Store")
-                      and pathlib.PurePosixPath(i.filename).name != ".DS_Store"
-                  ]
-                  if not entries:
-                      raise RuntimeError(f"{archive.name} is empty")
-
-                  # If the ZIP wraps all files in one top-level folder, remove that wrapper.
-                  names = [i.filename.rstrip("/") for i in entries if i.filename.rstrip("/")]
-                  top = {n.split("/", 1)[0] for n in names}
-                  strip_prefix = ""
-                  if len(top) == 1 and all("/" in n or n in top for n in names):
-                      candidate = next(iter(top))
-                      if all(n == candidate or n.startswith(candidate + "/") for n in names):
-                          if any(n.startswith(candidate + "/") for n in names):
-                              strip_prefix = candidate + "/"
-
-                  for info in entries:
-                      name = info.filename
-                      # Do not import workflow files from the archive: the GitHub App
-                      # cannot push workflow changes without the separate workflows permission.
-                      if pathlib.PurePosixPath(name).parts and pathlib.PurePosixPath(name).parts[0] == ".github":
-                          continue
-                      if strip_prefix:
-                          if not name.startswith(strip_prefix):
+          count = 0
+          try:
+              for archive in archives:
+                  print("Extracting:", archive.name)
+                  with zipfile.ZipFile(archive) as zf:
+                      for item in zf.infolist():
+                          name = item.filename
+                          if not name or name.endswith("/") or name.startswith("__MACOSX/"):
                               continue
-                          name = name[len(strip_prefix):]
-                      if not name or name.endswith("/"):
-                          continue
-                      rel = pathlib.PurePosixPath(name)
-                      if rel.is_absolute() or ".." in rel.parts:
-                          raise ValueError(f"Unsafe ZIP path: {info.filename}")
-                      target = safe_target(staging, str(rel))
-                      target.parent.mkdir(parents=True, exist_ok=True)
-                      with zf.open(info) as src, open(target, "wb") as dst:
-                          shutil.copyfileobj(src, dst)
-                      extracted_count += 1
+                          parts = pathlib.PurePosixPath(name).parts
+                          if not parts or parts[0] == ".github" or pathlib.PurePosixPath(name).is_absolute() or ".." in parts:
+                              continue
+                          target = (staging / pathlib.Path(*parts)).resolve()
+                          if staging.resolve() not in target.parents:
+                              raise RuntimeError("Unsafe ZIP path: " + name)
+                          target.parent.mkdir(parents=True, exist_ok=True)
+                          with zf.open(item) as src, target.open("wb") as dst:
+                              shutil.copyfileobj(src, dst)
+                          count += 1
 
-          if extracted_count == 0:
-              raise RuntimeError("No files were extracted from the ZIP archives")
+              if count == 0:
+                  raise RuntimeError("No files found in source ZIPs.")
 
-          # Copy extracted files into the repository, preserving their folder structure.
-          for src in staging.rglob("*"):
-              if src.is_file():
-                  rel = src.relative_to(staging)
-                  if rel.parts and rel.parts[0] == ".github":
+              for src in staging.rglob("*"):
+                  if not src.is_file():
                       continue
+                  rel = src.relative_to(staging)
                   dst = root / rel
                   if dst.exists() and dst.is_dir():
-                      raise RuntimeError(f"File/directory conflict at {rel}")
+                      raise RuntimeError("File/directory conflict: " + str(rel))
                   dst.parent.mkdir(parents=True, exist_ok=True)
                   shutil.copy2(src, dst)
 
-          shutil.rmtree(staging)
-
-          # Remove uploaded ZIPs only after extraction completed successfully.
-          for archive in archives:
-              archive.unlink()
-
-          print(f"Extracted {extracted_count} files. Source ZIPs removed.")
+              for archive in archives:
+                  archive.unlink()
+              print(f"Successfully extracted {count} files from {len(archives)} ZIPs.")
+          finally:
+              if staging.exists():
+                  shutil.rmtree(staging)
           PY
 
       - name: Commit extracted source files
@@ -125,7 +95,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "No extracted file changes to commit."
+            echo "No changes to commit; source is already extracted."
           else
             git commit -m "Extract NetMirror Music source ZIPs"
             git push
