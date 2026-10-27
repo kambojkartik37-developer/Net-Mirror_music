@@ -73,6 +73,10 @@ jobs:
 
                   for info in entries:
                       name = info.filename
+                      # Do not import workflow files from the archive: the GitHub App
+                      # cannot push workflow changes without the separate workflows permission.
+                      if pathlib.PurePosixPath(name).parts and pathlib.PurePosixPath(name).parts[0] == ".github":
+                          continue
                       if strip_prefix:
                           if not name.startswith(strip_prefix):
                               continue
@@ -95,6 +99,8 @@ jobs:
           for src in staging.rglob("*"):
               if src.is_file():
                   rel = src.relative_to(staging)
+                  if rel.parts and rel.parts[0] == ".github":
+                      continue
                   dst = root / rel
                   if dst.exists() and dst.is_dir():
                       raise RuntimeError(f"File/directory conflict at {rel}")
