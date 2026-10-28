@@ -64,9 +64,22 @@ jobs:
 
       - name: Build universal FOSS APK
         working-directory: NET-MIRROR-main
+        shell: bash
         run: |
-          set -euo pipefail
-          ./gradlew --no-daemon --stacktrace assembleUniversalFossDebug
+          set -uo pipefail
+          set +e
+          ./gradlew --no-daemon --console=plain --stacktrace assembleUniversalFossDebug 2>&1 | tee "$RUNNER_TEMP/netmirror-tv-build.log"
+          BUILD_STATUS=${PIPESTATUS[0]}
+          set -e
+          if [ "$BUILD_STATUS" -ne 0 ]; then
+            echo "::group::BUILD FAILURE SUMMARY"
+            grep -n -E -i 'What went wrong|Execution failed for task|^e: | error:|Could not resolve|Could not find|Unresolved reference|Compilation error|Caused by:|requires.*compileSdk|No matching variant|BUILD FAILED' "$RUNNER_TEMP/netmirror-tv-build.log" | tail -n 100 || true
+            echo "::endgroup::"
+            echo "::group::LAST 180 BUILD LOG LINES"
+            tail -n 180 "$RUNNER_TEMP/netmirror-tv-build.log"
+            echo "::endgroup::"
+            exit "$BUILD_STATUS"
+          fi
 
       - name: Locate APK
         id: apk
