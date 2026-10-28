@@ -1,4 +1,4 @@
-name: NetMirror Music Android TV — Build and Publish
+name: NetMirror Music Android TV — Build and Publish (SDK and signing fix)
 
 on:
   workflow_dispatch:
