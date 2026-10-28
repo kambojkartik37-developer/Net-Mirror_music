@@ -1,0 +1,70 @@
+name: NetMirror Music Android TV — Build and Publish
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "NET-MIRROR-main/**"
+      - ".github/workflows/android-tv-build.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: netmirror-android-tv-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Android TV APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platform-tools" "platforms;android-37" "build-tools;37.0.0" "ndk;28.2.13676358"
+
+      - name: Build universal FOSS APK
+        working-directory: NET-MIRROR-main
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleUniversalFossDebug
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK="$(find NET-MIRROR-main/app/build/outputs/apk -type f -name '*.apk' | head -n 1)"
+          test -n "$APK" || { echo "No APK was generated"; exit 1; }
+          mkdir -p publish
+          cp "$APK" publish/NetMirror-Music-Android-TV.apk
+          echo "path=publish/NetMirror-Music-Android-TV.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetMirror-Music-Android-TV-APK
+          path: publish/NetMirror-Music-Android-TV.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-tv-build-${{ github.run_number }}
+          name: NetMirror Music Android TV Build ${{ github.run_number }}
+          body: |
+            Automated Android TV-targeted build from the uploaded NET-MIRROR-main source.
+            APK is a debug-signed build for testing. Install and test on your Android TV before everyday use.
+          files: publish/NetMirror-Music-Android-TV.apk
+          make_latest: true
