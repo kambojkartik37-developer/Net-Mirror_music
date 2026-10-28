@@ -4,6 +4,12 @@
   <p><b>A modern Android music app with ad-free streaming, synced lyrics, offline playback, and an intuitive user experience.</b></p>
 </div>
 
+## 📥 Latest APK Build
+
+**[⬇️ Download the latest NetMirror Music APK artifact](https://github.com/kambojkartik37-developer/Net-Mirror_music/actions/runs/40528809007)**
+
+Build status: ✅ Successful. Open the link, scroll to **Artifacts**, and tap **NetMirror-Music-APK** to download the ZIP. Extract the ZIP to get the APK. This build includes the USB audio JNI symbol fix. The artifact expires on **November 10, 2026**; future builds will have their own Actions run page.
+
 ---
 
 ## Overview
