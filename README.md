@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="images/netmirror-music-logo.jpg" alt="NetMirror Music logo" width="220">
+<img src="README-images/netmirror-music-logo.jpg" alt="NetMirror Music logo" width="220">
 
 # NETMIRROR MUSIC
 
@@ -43,13 +43,13 @@
 <div align="center">
 
 ### Home & Music Player
-<img src="images/home-screen.png" alt="NetMirror Music home screen and music player" width="300">
+<img src="README-images/home-screen.png" alt="NetMirror Music home screen and music player" width="300">
 
 ### Listen Together
-<img src="images/listen-together.png" alt="Listen Together room screen" width="300">
+<img src="README-images/listen-together.png" alt="Listen Together room screen" width="300">
 
 ### NetMirror Music Branding
-<img src="images/netmirror-music-logo.jpg" alt="NetMirror Music logo" width="300">
+<img src="README-images/netmirror-music-logo.jpg" alt="NetMirror Music logo" width="300">
 
 </div>
 
