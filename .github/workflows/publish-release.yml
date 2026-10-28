@@ -1,0 +1,39 @@
+name: Publish NetMirror Music APK to Releases
+
+on:
+  workflow_run:
+    workflows: ["NetMirror Music APK - Clean Build"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download APK artifact from successful build
+        uses: actions/download-artifact@v4
+        with:
+          name: NetMirror-Music-APK
+          path: release-files
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Publish APK as a GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: netmirror-build-${{ github.event.workflow_run.run_number }}
+          name: NetMirror Music APK — Build ${{ github.event.workflow_run.run_number }}
+          body: |
+            Automated APK release published after a successful NetMirror Music clean build.
+
+            **APK:** NetMirror-Music-Universal-FOSS-Debug.apk
+
+            This is a debug build for testing. Install only if you trust this build.
+          files: release-files/NetMirror-Music-Universal-FOSS-Debug.apk
+          make_latest: true
