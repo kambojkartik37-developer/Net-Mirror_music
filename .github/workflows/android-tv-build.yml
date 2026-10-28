@@ -39,13 +39,21 @@ jobs:
             exit 1
           fi
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
+          "$SDKMANAGER" --channel=3 "platform-tools" "platforms;android-37" "build-tools;36.0.0" "ndk;28.2.13676358"
+
+      - name: Verify Android SDK and Gradle configuration
+        working-directory: NET-MIRROR-main
+        run: |
+          set -euo pipefail
+          test -d "$ANDROID_HOME/platforms/android-37" || { echo "Android API 37 platform is missing"; exit 1; }
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --version
 
       - name: Build universal FOSS APK
         working-directory: NET-MIRROR-main
         run: |
-          chmod +x ./gradlew
-          ./gradlew --no-daemon assembleUniversalFossDebug
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace assembleUniversalFossDebug
 
       - name: Locate APK
         id: apk
