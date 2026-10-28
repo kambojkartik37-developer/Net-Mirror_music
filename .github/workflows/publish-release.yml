@@ -1,8 +1,8 @@
-name: Publish NetMirror Music APK to Releases
+name: Publish NetMirror Music Android Phone APK to Releases
 
 on:
   workflow_run:
-    workflows: ["NetMirror Music APK - Clean Build"]
+    workflows: ["NetMirror Music Android Phone APK - Clean Build"]
     types: [completed]
     branches: [main]
 
@@ -18,7 +18,7 @@ jobs:
       - name: Download APK artifact from successful build
         uses: actions/download-artifact@v4
         with:
-          name: NetMirror-Music-APK
+          name: NetMirror-Music-Android-Phone-APK
           path: release-files
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -28,9 +28,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: netmirror-build-${{ github.event.workflow_run.run_number }}
-          name: NetMirror Music APK — Build ${{ github.event.workflow_run.run_number }}
+          name: NetMirror Music Android Phone APK — Build ${{ github.event.workflow_run.run_number }}
           body: |
-            Automated APK release published after a successful NetMirror Music clean build.
+            Automated Android Phone APK release published after a successful NetMirror Music Android Phone clean build.
 
             **APK:** NetMirror-Music-Universal-FOSS-Debug.apk
 
