@@ -1,4 +1,4 @@
-name: Build NetMirror Music APK
+name: Build NetMirror Music Android Phone APK
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: netmirror-apk-build
+  group: netmirror-android-phone-apk-build
   cancel-in-progress: false
 
 jobs:
@@ -106,7 +106,7 @@ jobs:
       - name: Upload installable APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NetMirror-Music-APK
+          name: NetMirror-Music-Android-Phone-APK
           path: build-apks/*.apk
           if-no-files-found: error
           retention-days: 14
