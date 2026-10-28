@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-apk-clean.yml'
+      - '.github/workflows/publish-release.yml'
       - '**/*.kt'
       - '**/*.java'
       - '**/*.cpp'
