@@ -1,4 +1,4 @@
-name: NetMirror Music APK - Clean Build
+name: NetMirror Music Android Phone APK - Clean Build
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: netmirror-music-clean-apk
+  group: netmirror-music-android-phone-clean-apk
   cancel-in-progress: false
 
 jobs:
@@ -116,7 +116,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NetMirror-Music-APK
+          name: NetMirror-Music-Android-Phone-APK
           path: build-apks/NetMirror-Music-Universal-FOSS-Debug.apk
           if-no-files-found: error
           retention-days: 14
