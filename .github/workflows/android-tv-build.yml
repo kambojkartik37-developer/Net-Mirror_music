@@ -28,13 +28,18 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Android SDK tools
-        uses: android-actions/setup-android@v3
-
-      - name: Install required Android SDK packages
+      - name: Install Android SDK packages
+        shell: bash
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-37" "build-tools;37.0.0" "ndk;28.2.13676358"
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(command -v sdkmanager || find "$SDK_ROOT" -type f -name sdkmanager 2>/dev/null | head -n 1)"
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "sdkmanager not found under SDK root: $SDK_ROOT"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-37" "build-tools;37.0.0" "ndk;28.2.13676358"
 
       - name: Build universal FOSS APK
         working-directory: NET-MIRROR-main
