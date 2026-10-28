@@ -49,6 +49,19 @@ jobs:
           chmod +x ./gradlew
           ./gradlew --no-daemon --version
 
+      - name: Create Android debug signing keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA -keysize 2048 -validity 10000
+
       - name: Build universal FOSS APK
         working-directory: NET-MIRROR-main
         run: |
