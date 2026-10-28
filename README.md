@@ -5,7 +5,7 @@
   <p><b>Your music. Your style. One Android app.</b></p>
   <p>Ad-free listening · Offline playback · Synced lyrics · Modern music player</p>
 
-  <a href="https://github.com/kambojkartik37-developer/Net-Mirror_music/actions/runs/40528809007"><strong>⬇️ GET THE LATEST APK</strong></a>
+  <a href="https://github.com/kambojkartik37-developer/Net-Mirror_music/releases/latest"><strong>⬇️ GET THE LATEST APK</strong></a>
   <br/><br/>
   <img src="Screenshots/Home.png" alt="NET-MIRROR Music app home screen" width="230"/>
 </div>
@@ -14,11 +14,9 @@
 
 ## 📲 Download the App
 
-The latest Android build is ready. Tap the button above or use this link:
+**[⬇️ Download the latest NET-MIRROR Music APK from Releases](https://github.com/kambojkartik37-developer/Net-Mirror_music/releases/latest)**
 
-**[⬇️ Download NET-MIRROR Music APK](https://github.com/kambojkartik37-developer/Net-Mirror_music/actions/runs/40528809007)**
-
-On the Actions page, open **Artifacts → NetMirror-Music-APK** to download the ZIP, then extract it to get the APK. This successful build includes the USB audio JNI symbol fix. The artifact expires on **November 10, 2026**.
+Successful clean builds will be published automatically to the repository's **Releases** section. Open a release and download `NetMirror-Music-Universal-FOSS-Debug.apk`. These are debug builds intended for testing.
 
 ---
 
