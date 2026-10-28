@@ -1,14 +1,24 @@
 <div align="center">
-  <img src="assets/banner.png" alt="NET-MIRROR Logo"/>
+  <img src="assets/banner.png" alt="NET-MIRROR Logo" width="100%"/>
 
-  <p><b>A modern Android music app with ad-free streaming, synced lyrics, offline playback, and an intuitive user experience.</b></p>
+  <h1>NET-MIRROR Music</h1>
+  <p><b>Your music. Your style. One Android app.</b></p>
+  <p>Ad-free listening · Offline playback · Synced lyrics · Modern music player</p>
+
+  <a href="https://github.com/kambojkartik37-developer/Net-Mirror_music/actions/runs/40528809007"><strong>⬇️ GET THE LATEST APK</strong></a>
+  <br/><br/>
+  <img src="Screenshots/Home.png" alt="NET-MIRROR Music app home screen" width="230"/>
 </div>
 
-## 📥 Latest APK Build
+---
 
-**[⬇️ Download the latest NetMirror Music APK artifact](https://github.com/kambojkartik37-developer/Net-Mirror_music/actions/runs/40528809007)**
+## 📲 Download the App
 
-Build status: ✅ Successful. Open the link, scroll to **Artifacts**, and tap **NetMirror-Music-APK** to download the ZIP. Extract the ZIP to get the APK. This build includes the USB audio JNI symbol fix. The artifact expires on **November 10, 2026**; future builds will have their own Actions run page.
+The latest Android build is ready. Tap the button above or use this link:
+
+**[⬇️ Download NET-MIRROR Music APK](https://github.com/kambojkartik37-developer/Net-Mirror_music/actions/runs/40528809007)**
+
+On the Actions page, open **Artifacts → NetMirror-Music-APK** to download the ZIP, then extract it to get the APK. This successful build includes the USB audio JNI symbol fix. The artifact expires on **November 10, 2026**.
 
 ---
 
