@@ -1321,8 +1321,9 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
         .setLoadControl(
           DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-              360_000, // min buffer: 6 minutes (will fetch heavily ahead)
-              360_000, // max buffer: 6 minutes
+              // NET-MIRROR TV build: smaller buffers reduce memory use on low-RAM TV boxes.
+              45_000, // min buffer: 45 seconds
+              90_000, // max buffer: 90 seconds
               150, // bufferForPlaybackMs: 150ms for near-instant zero-latency startup
               500 // bufferForPlaybackAfterRebufferMs: 500ms
             )
