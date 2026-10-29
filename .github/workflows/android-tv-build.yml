@@ -16,6 +16,7 @@ on:
       - "*.gradle.kts"
       - "gradlew"
       - ".github/workflows/android-tv-build.yml"
+      - ".github/workflows/publish-main-release.yml"
 
 permissions:
   contents: read
