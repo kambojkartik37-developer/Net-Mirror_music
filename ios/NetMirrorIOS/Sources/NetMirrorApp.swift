@@ -53,10 +53,10 @@ private struct SearchView: View {
                     .submitLabel(.search)
                     .padding(.horizontal)
 
-                ContentUnavailableView(
-                    "Music search isn't connected yet",
-                    systemImage: "music.magnifyingglass",
-                    description: Text("The native iOS shell builds first. Music providers will be integrated in a later step.")
+                PlaceholderView(
+                    title: "Music search isn't connected yet",
+                    symbol: "music.magnifyingglass",
+                    message: "The native iOS shell builds first. Music providers will be integrated in a later step."
                 )
                 .padding(.top, 8)
 
@@ -71,13 +71,38 @@ private struct SearchView: View {
 private struct LibraryView: View {
     var body: some View {
         NavigationStack {
-            ContentUnavailableView(
-                "Your library",
-                systemImage: "music.note.list",
-                description: Text("Library storage and playlists are not connected yet.")
+            PlaceholderView(
+                title: "Your library",
+                symbol: "music.note.list",
+                message: "Library storage and playlists are not connected yet."
             )
             .navigationTitle("Library")
         }
+    }
+}
+
+private struct PlaceholderView: View {
+    let title: String
+    let symbol: String
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: symbol)
+                .font(.system(size: 32))
+                .foregroundStyle(.secondary)
+
+            Text(title)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
     }
 }
 
