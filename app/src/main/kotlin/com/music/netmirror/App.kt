@@ -338,6 +338,19 @@ class App : Application(), SingletonImageLoader.Factory {
     }
   }
 
+  // NET-MIRROR TV build: clear thumbnails when Android reports low memory, helping
+  // low-RAM TV boxes keep playback and the Compose UI alive under memory pressure.
+  override fun onTrimMemory(level: Int) {
+    super.onTrimMemory(level)
+    if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
+      try {
+        SingletonImageLoader.get(this).memoryCache?.clear()
+      } catch (e: Exception) {
+        Timber.w(e, "Failed to trim Coil memory cache under memory pressure")
+      }
+    }
+  }
+
   @Volatile private var cachedCoilCacheSize: Int? = null
 
   override fun newImageLoader(context: PlatformContext): ImageLoader {
@@ -360,7 +373,7 @@ class App : Application(), SingletonImageLoader.Factory {
         allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
         components { add(YouTubeThumbnailFallbackInterceptor()) }
 
-        memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.25).build() }
+        memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.12).build() }
         if (cacheSize == 0) {
           diskCachePolicy(CachePolicy.DISABLED)
         } else {
