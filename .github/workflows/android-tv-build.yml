@@ -26,12 +26,12 @@ concurrency:
 
 jobs:
   build-tv-apk:
-    name: Build and verify Android TV ARM64 APK
+    name: Build Android TV ARM64 APK
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
     steps:
-      - name: Checkout repository
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Set up Java 21
@@ -41,31 +41,17 @@ jobs:
           java-version: "21"
           cache: gradle
 
-      - name: Set up Android SDK
+      - name: Install Android SDK correctly
+        uses: android-actions/setup-android@v3
+
+      - name: Install required SDK packages
         shell: bash
         run: |
           set -euo pipefail
-          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
-          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit)"
-          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
-            echo "::error::Android sdkmanager was not found in the preinstalled runner SDK"
-            find "$SDK_ROOT" -maxdepth 4 -name sdkmanager -type f -print || true
-            exit 1
-          fi
-          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
-          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
-          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
-          "$SDKMANAGER" --version
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
 
-      - name: Install Android SDK packages
-        shell: bash
-        run: |
-          set -euo pipefail
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" --install "platform-tools" "platforms;android-37" "build-tools;36.0.0" "ndk;28.2.13676358"
-
-      - name: Validate project and prepare debug signing
+      - name: Validate TV source and prepare signing
         shell: bash
         run: |
           set -euo pipefail
@@ -73,11 +59,9 @@ jobs:
           test -f app/build.gradle.kts
           test -f app/src/main/AndroidManifest.xml
           test -f gradle/wrapper/gradle-wrapper.jar
-          grep -q 'android.intent.category.LEANBACK_LAUNCHER' app/src/main/AndroidManifest.xml || {
-            echo "::error::Android TV Leanback launcher category is missing from the manifest"
-            exit 1
-          }
-          chmod +x gradlew
+          grep -q 'android.intent.category.LEANBACK_LAUNCHER' app/src/main/AndroidManifest.xml
+          grep -q 'android:name=".MainActivity"' app/src/main/AndroidManifest.xml
+          chmod +x ./gradlew
           mkdir -p "$HOME/.android"
           if [ ! -f "$HOME/.android/debug.keystore" ]; then
             keytool -genkeypair -v \
@@ -88,22 +72,10 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US" \
               -keyalg RSA -keysize 2048 -validity 10000
           fi
+          java -version
           ./gradlew --no-daemon --version
 
-      - name: Align compile SDK for current dependency metadata
-        shell: bash
-        run: |
-          set -euo pipefail
-          # This adjustment is limited to the temporary CI checkout.
-          if grep -Eq 'compileSdk[[:space:]]*=[[:space:]]*36' app/build.gradle.kts; then
-            sed -i -E 's/compileSdk[[:space:]]*=[[:space:]]*36/compileSdk = 37/' app/build.gradle.kts
-          fi
-          grep -q 'compileSdk = 37' app/build.gradle.kts || {
-            echo "::error::Could not set app compileSdk to 37"
-            exit 1
-          }
-
-      - name: Build FOSS ARM64 debug APK and capture diagnostics
+      - name: Build TV ARM64 FOSS debug APK
         shell: bash
         run: |
           set -uo pipefail
@@ -112,8 +84,8 @@ jobs:
           result=${PIPESTATUS[0]}
           set -e
           if [ "$result" -ne 0 ]; then
-            echo "::group::Likely build errors"
-            grep -n -E -i 'What went wrong|Execution failed for task|^e: | error:|Could not resolve|Could not find|Unresolved reference|Compilation error|requires libraries|Caused by:|BUILD FAILED' "$RUNNER_TEMP/tv-build.log" | tail -n 120 || true
+            echo "::group::Build error summary"
+            grep -n -E -i 'What went wrong|Execution failed for task|^e: | error:|Could not resolve|Could not find|Unresolved reference|Compilation error|requires libraries|Caused by:|BUILD FAILED|SDK location not found' "$RUNNER_TEMP/tv-build.log" | tail -n 100 || true
             echo "::endgroup::"
             echo "::group::Last 180 build log lines"
             tail -n 180 "$RUNNER_TEMP/tv-build.log"
@@ -121,25 +93,23 @@ jobs:
             exit "$result"
           fi
 
-      - name: Verify and stage Android TV APK
+      - name: Verify and stage TV APK
         shell: bash
         run: |
           set -euo pipefail
           APK="$(find app/build/outputs/apk -type f -name '*.apk' -print | grep -i 'arm64' | grep -i 'foss' | grep -i 'debug' | head -n 1 || true)"
           if [ -z "$APK" ]; then
-            echo "::error::Build completed but the FOSS ARM64 Debug APK was not found"
+            echo "::error::Build succeeded but ARM64 FOSS debug APK was not found"
             find app/build/outputs -maxdepth 7 -type f 2>/dev/null || true
             exit 1
           fi
           mkdir -p publish
           cp "$APK" publish/Net-Mirror-Music-android-tv-ARM64-debug.apk
           test -s publish/Net-Mirror-Music-android-tv-ARM64-debug.apk
-          echo "APK SHA-256:"
           sha256sum publish/Net-Mirror-Music-android-tv-ARM64-debug.apk
-          echo "APK file size:"
           ls -lh publish/
 
-      - name: Upload verified Android TV APK
+      - name: Upload Android TV APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: NetMirror-Music-android-tv-ARM64-debug
