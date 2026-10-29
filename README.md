@@ -63,13 +63,15 @@
 
 **Safety tip:** Only install APK files from a source you trust. Android may display a warning when installing apps outside the Play Store.
 
-## 📦 Downloads
+## 📦 Downloads — Main Release
 
-Check the repository's **Releases** section for the latest available build:
+**Download either build from the same release page:**
 
-- [View NetMirror Music Releases](../../releases)
+- 📱 **[Android Phone APK](../../releases/download/netmirror-main-release-1/NetMirror-Music-Universal-FOSS-Debug.apk)** — universal FOSS debug build.
+- 📺 **[Android TV APK (ARM64)](../../releases/download/netmirror-main-release-1/Net-Mirror-Music-android-tv-ARM64-debug.apk)** — TV-optimized ARM64 FOSS debug build.
+- **[Open Main Release page](../../releases/tag/netmirror-main-release-1)** — both APKs together.
 
-If no release is available yet, check the repository's **Actions** tab for build artifacts, if the project publishes them.
+The main release is updated automatically after a successful Android TV build. These are debug/testing APKs, not production-signed releases; install only if you trust the source. Android TV physical-device testing is not implied.
 
 ## 🛠️ Built With
 
