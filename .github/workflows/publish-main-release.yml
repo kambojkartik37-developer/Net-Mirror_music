@@ -1,0 +1,54 @@
+name: Publish NetMirror Music Main Release (Phone + TV)
+
+on:
+  workflow_run:
+    workflows: ["NetMirror Music Android TV APK"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish-main-release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Android TV APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: NetMirror-Music-android-tv-ARM64-debug
+          path: release-files
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Download latest published phone APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            "https://github.com/kambojkartik37-developer/Net-Mirror_music/releases/download/netmirror-build-12/NetMirror-Music-Universal-FOSS-Debug.apk" \
+            --output release-files/NetMirror-Music-Universal-FOSS-Debug.apk
+          test -s release-files/NetMirror-Music-Universal-FOSS-Debug.apk
+          ls -lh release-files/
+
+      - name: Publish combined main release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: netmirror-main-release-1
+          name: NetMirror Music — Main Release (Phone + Android TV)
+          body: |
+            ## NetMirror Music downloads
+
+            - **Android Phone:** NetMirror-Music-Universal-FOSS-Debug.apk — universal FOSS debug build.
+            - **Android TV (ARM64):** Net-Mirror-Music-android-tv-ARM64-debug.apk — Android TV ARM64 FOSS debug build.
+
+            Both files are debug/testing builds, not production-signed releases. Install only if you trust the source. The TV build has been built successfully in GitHub Actions; physical-device testing is not implied.
+          files: |
+            release-files/NetMirror-Music-Universal-FOSS-Debug.apk
+            release-files/Net-Mirror-Music-android-tv-ARM64-debug.apk
+          make_latest: true
+          fail_on_unmatched_files: true
+          overwrite_files: true
