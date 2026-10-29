@@ -1,0 +1,26 @@
+name: NetMirrorIOS
+options:
+  bundleIdPrefix: com.netmirror
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_CFBundleDisplayName: NetMirror
+    INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    PRODUCT_BUNDLE_IDENTIFIER: com.netmirror.ios
+    CODE_SIGN_STYLE: Automatic
+targets:
+  NetMirrorIOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_NAME: NetMirror
+        INFOPLIST_KEY_UIBackgroundModes: "audio"
